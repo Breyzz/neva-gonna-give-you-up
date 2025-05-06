@@ -1,0 +1,90 @@
+/* DBomBom Shop Sign In*/
+
+#include <stdio.h>
+#include <string.h>
+
+struct {
+    char nama[100], telepon[100], alamat[100], username[100], password[100];
+} data_pengguna;
+
+void signin() {
+    FILE *list_daftar_pengguna;
+    list_daftar_pengguna = fopen("data_user.dat", "ab");
+
+    printf("\n===SIGN IN===\n");    
+    printf("Nama            : "); gets(data_pengguna.nama);
+    printf("Nomor Telepon   : "); gets(data_pengguna.telepon);
+    printf("Alamat          : "); gets(data_pengguna.alamat);
+    printf("\n===USERNAME & PASSWORD===\n");
+    printf("Username        : "); gets(data_pengguna.username);
+    printf("Password        : "); gets(data_pengguna.password);
+    fwrite(&data_pengguna, sizeof(data_pengguna), 1, list_daftar_pengguna);
+    fclose(list_daftar_pengguna);
+    printf("\nRegistrasi Berhasil!\n");
+}
+
+void login() {
+    FILE *list_daftar_pengguna;
+    list_daftar_pengguna = fopen("data_user.dat", "rb");
+    int kesempatan = 3, ditemukan = 0;
+    char cek_user[100], cek_password[100];
+
+    printf("\n===LOG IN===\n");
+    printf("Username: "); gets(cek_user);
+    
+    while(fread(&data_pengguna, sizeof(data_pengguna), 1, list_daftar_pengguna)) {
+        if(strcmp(data_pengguna.username, cek_user) == 0) {
+            ditemukan = 1;
+            break;
+        }
+    }
+    if(ditemukan == 0) {
+        printf("Mohon periksa kembali username Anda.\n");
+        fclose(list_daftar_pengguna);
+        return;
+    }
+
+    while(kesempatan > 0) {
+        printf("Password: "); gets(cek_password);
+        if(strcmp(data_pengguna.password, cek_password) == 0) {
+            printf("Login Berhasil!\n");
+            printf("Halo %s\n", data_pengguna.username);
+            fclose(list_daftar_pengguna);
+            return;
+        } else {
+        kesempatan--;
+        if(kesempatan > 0) {
+            printf("Password salah. %d sisa kesempatan lagi.\n", kesempatan);
+            } else {
+            printf("Login gagal. Tidak ada kesempatan lagi.\n");
+            }
+        }
+    }
+fclose(list_daftar_pengguna);
+}
+int main () {
+
+    int pilihan, jumlah = 0;
+
+    while (1) {
+        printf("\n===SISTEM REGISTRASI DAN LOGIN===\n");
+        printf("1. Sign In\n");
+        printf("2. Login\n");
+        printf("3. Exit\n");
+        printf("Pilihan : "); scanf("%d", &pilihan); getchar();
+    switch (pilihan) {
+        case 1:
+            signin();
+            break;
+        case 2:
+            login();
+            break;
+        case 3:
+            printf("Terimakasih telah menggunakan program.\n");
+            return 0;
+        default:
+            printf("Pilihan invalid.\n");
+        }
+    }
+return 0;
+}
