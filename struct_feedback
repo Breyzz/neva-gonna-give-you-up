@@ -1,0 +1,54 @@
+//struct feedback
+
+struct {
+    char username[100];
+    char komentar[256];
+} feedback;
+
+// fungsi menampilkan feedback
+void lihatFeedback() {
+    FILE *file_feedback = fopen("feedback.dat", "rb");
+
+    if (file_feedback == NULL) {
+        printf("Belum ada feedback tersedia.\n");
+        return;
+    }
+
+    printf("\n=== Daftar Feedback Customer ===\n");
+
+    while (fread(&feedback, sizeof(feedback), 1, file_feedback)) {
+        printf("User     : %s\n", feedback.username);
+        printf("Feedback : %s\n\n", feedback.komentar);
+    }
+
+    fclose(file_feedback);
+}
+
+// Tambahan Menu feedback setelah login admin
+
+if(strcmp(data_pengguna.password, cek_password) == 0) {
+    printf("Login Berhasil!\n");
+    printf("Halo %s\n", data_pengguna.username);
+    fclose(list_daftar_pengguna);
+
+    int pilih;
+    do {
+        printf("\n=== MENU ADMIN ===\n");
+        printf("1. Lihat Feedback Customer\n");
+        printf("2. Logout\n");
+        printf("Pilihan: "); scanf("%d", &pilih); getchar();
+
+        switch(pilih) {
+            case 1:
+                lihatFeedback();
+                break;
+            case 2:
+                printf("Logout...\n");
+                break;
+            default:
+                printf("Pilihan tidak valid.\n");
+        }
+    } while(pilih != 2);
+
+    return;
+}
