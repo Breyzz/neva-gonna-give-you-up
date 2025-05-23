@@ -19,7 +19,7 @@ struct Pesanan {
     char status[100];
 };
 
-struct {
+struct Feedback {
     char username[100];
     char komentar[256];
 } feedback;
@@ -76,9 +76,11 @@ int main () {
     
     switch (pilihan) {
         case 1:
+            system("cls");
             loginAdmin();
             break;
         case 2:
+            system("cls");
             User();
             break;
         case 3:
@@ -118,12 +120,13 @@ void User() {
     printf("1. Login\n");
     printf("2. Registrasi\n");
     printf("Pilihan : "); scanf("%d", &pilihan);
+    getchar();
 
     switch (pilihan) {
         case 1:
-            loginPengguna();
+            loginPengguna();break;
         case 2:
-            registrasi(); 
+            registrasi(); break;
         default:
             printf("\nPilihan tidak valid.\n");
     }
@@ -157,10 +160,12 @@ void loginPengguna() {
     }
     fclose(fp);
 
-    if (ditemukan)
-        printf("Login berhasil! Selamat datang, %s\n", username);
-    else
+    if (ditemukan){
+        printf("Login berhasil! Selamat datang, %s\n", username);menuPengguna();
+    }
+    else{
         printf("Username atau password salah.\n");
+    }
 }
 
 void registrasi() {
@@ -185,6 +190,7 @@ void registrasi() {
     fclose(fp);
 
     printf("Registrasi berhasil!\n");
+    User();
 }
 
 void menuAdmin() {
@@ -195,6 +201,7 @@ void menuAdmin() {
     printf("2. Status Pesanan\n");
     printf("3. Feedback\n");
     printf("4. Menu Keuangan\n");
+    printf("5. Keluar\n");
     printf("Pilihan : "); scanf("%d", &pilihan);
 
     switch (pilihan) {
@@ -211,6 +218,9 @@ void menuAdmin() {
         case 4:
             menuKeuangan();
             break;
+        case 5:
+            main();
+            break;
         default:
             printf("\nPilihan tidak valid!\n");
     }
@@ -226,7 +236,7 @@ void menuPengguna() {
 
     switch (pilihan) {
         case 1:
-            // menuPembelian();
+             menuPembelian();
             break;
         case 2:
             menuInformasi();
@@ -251,7 +261,7 @@ void MenuBarang() {
             case 1: tambahbarang(); break;
             case 2: tampilkanbarang(); break;
             case 3: hapusbarang(); break;
-            case 4: break;
+            case 4: menuAdmin(); break;
             default: printf("Pilihan tidak valid.\n");
         }
     } while (pilihan != 4);
