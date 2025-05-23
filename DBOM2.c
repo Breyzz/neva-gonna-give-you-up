@@ -19,10 +19,18 @@ struct Pesanan {
     char status[100];
 };
 
-struct Feedback {
+struct {
     char username[100];
     char komentar[256];
 } feedback;
+
+struct User {
+    int member;
+    char pass[100];
+    float saldo;
+};
+
+
 
 
 void loginAdmin ();
@@ -56,6 +64,9 @@ void melihatbarang();
 void searchingbarang();
 void membelibarang(); 
 void feedbackUser();
+
+int bacaUser(struct User *user);
+int simpanUser(struct User *user);
 
 void menuInformasi();
 void topupSaldo();
@@ -120,13 +131,12 @@ void User() {
     printf("1. Login\n");
     printf("2. Registrasi\n");
     printf("Pilihan : "); scanf("%d", &pilihan);
-    getchar();
 
     switch (pilihan) {
         case 1:
-            loginPengguna();break;
+            loginPengguna();
         case 2:
-            registrasi(); break;
+            registrasi(); 
         default:
             printf("\nPilihan tidak valid.\n");
     }
@@ -160,12 +170,10 @@ void loginPengguna() {
     }
     fclose(fp);
 
-    if (ditemukan){
-        printf("Login berhasil! Selamat datang, %s\n", username);menuPengguna();
-    }
-    else{
+    if (ditemukan)
+        printf("Login berhasil! Selamat datang, %s\n", username);
+    else
         printf("Username atau password salah.\n");
-    }
 }
 
 void registrasi() {
@@ -190,7 +198,6 @@ void registrasi() {
     fclose(fp);
 
     printf("Registrasi berhasil!\n");
-    User();
 }
 
 void menuAdmin() {
@@ -201,7 +208,6 @@ void menuAdmin() {
     printf("2. Status Pesanan\n");
     printf("3. Feedback\n");
     printf("4. Menu Keuangan\n");
-    printf("5. Keluar\n");
     printf("Pilihan : "); scanf("%d", &pilihan);
 
     switch (pilihan) {
@@ -218,9 +224,6 @@ void menuAdmin() {
         case 4:
             menuKeuangan();
             break;
-        case 5:
-            main();
-            break;
         default:
             printf("\nPilihan tidak valid!\n");
     }
@@ -236,7 +239,7 @@ void menuPengguna() {
 
     switch (pilihan) {
         case 1:
-             menuPembelian();
+            // menuPembelian();
             break;
         case 2:
             menuInformasi();
@@ -261,7 +264,7 @@ void MenuBarang() {
             case 1: tambahbarang(); break;
             case 2: tampilkanbarang(); break;
             case 3: hapusbarang(); break;
-            case 4: menuAdmin(); break;
+            case 4: break;
             default: printf("Pilihan tidak valid.\n");
         }
     } while (pilihan != 4);
@@ -502,7 +505,7 @@ void totalPendapatan() {
     int jumlah;
     int total = 0;
 
-    file = fopen("transaksi.txt", "r");
+    file = fopen("transaksi.dat", "r");
     if (file == NULL) {
         printf("Gagal membuka file transaksi.\n");
         return;
@@ -526,7 +529,7 @@ void historiTransaksi() {
     int jumlah;
     int nomor = 1;
 
-    file = fopen("transaksi.txt", "r");
+    file = fopen("transaksi.dat", "r");
     if (file == NULL) {
         printf("Gagal membuka file transaksi.\n");
         return;
@@ -575,12 +578,42 @@ void menuInformasi() {
     }
 }
 
-void topupSaldo() { // nanti ganti ke binary file
-    FILE *ftopup;
-    ftopup = fopen("data_saldo.txt", "r+");
-    float topup, saldo;
+int bacaUser(struct User *user) {
+    FILE *fuser;
+    fuser = fopen("user.dat", "rb");
+    int hasil;
 
-    if(!ftopup) {
+    if(!fuser) {
+        user->member = 0;
+        user->saldo = 0.0;
+        return 0;
+    }
+
+    hasil = fread(user, sizeof(struct User), 1, fuser);
+    fclose(fuser);
+    return hasil;
+}
+
+int simpanUser(struct User *user) {
+    FILE *fuser;
+    fuser = fopen("user.dat", "wb");
+    int hasil;
+
+    if(!fuser) {
+        printf("\nGagal membuka file!\n");
+        return 0;
+    }
+
+    hasil = fwrite(user, sizeof(struct User), 1, fuser);
+    fclose(fuser);
+    return hasil;
+}
+
+void topupSaldo() {
+    struct User user;
+    float topup;
+
+    if(!bacaUser(&user)) {
         printf("\nGagal membuka file!\n");
         return;
     }
@@ -591,80 +624,74 @@ void topupSaldo() { // nanti ganti ke binary file
     if(topup < 0) {
         printf("Gagal Top-Up. Tidak boleh angka negatif.\n");
     } else {
-        saldo += topup;
-        rewind(ftopup);
-        fprintf(ftopup, "%.2f", saldo);
-        printf("Top-up Berhasil! Saldo sekarang : %.2f\n", saldo);
+        user.saldo += topup;
+        if(simpanUser(&user)) {
+            printf("Top-up Berhasil! Saldo sekarang : %.2f\n", user.saldo);
+        } else {
+            printf("Top-up Gagal!\n");
+        }
     }
-    fclose(ftopup);
 }
 
-void lihatSaldo() { // ganti ke binary
-    FILE *flihat;
-    flihat = fopen("data_saldo.txt", "r");
-    float saldo;
+void lihatSaldo() {
+    struct User user;
 
-    if(!flihat) {
+    if(!bacaUser(&user)) {
         printf("\nGagal membuka file!\n");
-        return;
     }
 
     printf("\n=== LIHAT SALDO ===\n");
-    fscanf(flihat, "%.2f", &saldo);
-    printf("Saldo sekarang : %.2f", saldo);
-    fclose(flihat);
+    printf("Saldo sekarang : %.2f", user.saldo);
 }
 
-void membership() { // ganti ke binary
-    FILE *fsaldo, *fmember;
-    fsaldo = fopen("data_saldo.txt", "r+");
-    fmember = fopen("data_member.txt", "r+");
-    int status;
-    float saldo;
+void membership() {
+    struct User user;
 
-    if(!fsaldo || !fmember) {
+    if (!bacaUser(&user)) {
         printf("\nGagal membuka file!\n");
-        return;
     }
 
     printf("\n=== MEMBERSHIP ===\n");
-    fscanf(fmember, "%d", &status);
-    fscanf(fsaldo, "%.2f", &saldo);
-
-    if(status == 1) {
+    if (user.member == 1) {
         printf("\nAnda sudah menjadi Member!\n");
     } else {
         printf("\nHARGA MEMBERSHIP : Rp. 100.000,00\n");
-        if (saldo >= 100000) {
-            saldo -= 100000;
-            rewind(fsaldo);
-            rewind(fmember);
-            fprintf(fsaldo, "%.2f", saldo);
-            fprintf(fmember, "1");
-            printf("\nAnda berhasil menjadi Member!\n");
+        if (user.saldo >= 100000) {
+            user.saldo -= 100000;
+            user.member = 1;
+            
+            if (simpanUser(&user)) {
+                printf("\nAnda berhasil menjadi Member!\n");
+                printf("Saldo tersisa: %.2f\n", user.saldo);
+            } else {
+                printf("Membership Gagal!\n");
+            }
         } else {
             printf("\nSaldo tidak cukup untuk menjadi Member.\n");
+            printf("Saldo anda: %.2f\n", user.saldo);
         }
     }
-    fclose(fsaldo);
-    fclose(fmember);
 }
 
-void menggantiPass() { // ganti ke binary
-    FILE *fpass;
-    fpass = fopen("password.txt", "r+");
+void menggantiPass() {
+    struct User user;  
     char password[100], pass[100], pass_baru[100];
 
-    fscanf(fpass, "%s", password);
+    if(!bacaUser(&user)) {
+        printf("\nGagal membuka file!\n");
+    }
+
     printf("Masukkan password lama : "); scanf("%s", pass);
 
-    if(strcmp(password, pass) == 0) {
+    if(strcmp(user.pass, pass) == 0) {
         printf("Masukkan password baru : "); scanf("%s", pass_baru);
-        rewind(fpass);
-        fprintf(fpass, "%s", pass_baru);
-        printf("Password berhasil diubah!\n");
+        strcpy(user.pass, pass_baru);
+        if(simpanUser(&user)) {
+            printf("Password berhasil diubah!\n");
+        } else {
+            printf("Gagal simpan file!\n");
+        }
     } else {
         printf("Password lama salah!\n");
     }
-    fclose(fpass);
 }
