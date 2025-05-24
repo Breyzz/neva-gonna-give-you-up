@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #define MAX_BARANG 100
+#define MAX_BELI 10
 
 struct barang {
     int harga;
@@ -29,6 +30,19 @@ struct User {
     char pass[100];
     float saldo;
 };
+
+typedef struct {
+    int id;
+    char nama[50];
+    int stok;
+    float harga;
+} Barang;
+
+typedef struct {
+    Barang barang;
+    int jumlah;
+} Pembelian;
+
 
 void loginAdmin ();
 void User();
@@ -242,7 +256,7 @@ void menuPengguna() {
 
     switch (pilihan) {
         case 1:
-             menuPembelian();
+            menuPembelian();
             break;
         case 2:
             menuInformasi();
@@ -550,7 +564,124 @@ void historiTransaksi() {
 }
 
 void menuPembelian() {
+    int pilihan;
 
+    printf("\n=== MENU PEMBELIAN ===\n");
+    printf("1. Melihat Barang\n");
+    printf("2. Searching Barang\n");
+    printf("3. Membeli Barang\n");
+    printf("4. Feedback User\n");
+    printf("Pilihan : "); scanf("%d", &pilihan);
+
+    switch (pilihan) {
+        case 1:
+            melihatbarang();
+            break;
+        case 2:
+            searchingbarang();
+            break;
+        case 3:
+            membelibarang();
+            break;
+        case 4:
+            feedbackUser();
+            break;
+        default:
+            printf("\nPilihan tidak valid\n");
+    }
+}
+
+void melihatbarang() {
+    FILE *fp = fopen("barang.dat", "rb");
+    Barang b;
+
+    if (fp == NULL) {
+        printf("File tidak ditemukan.\n");
+        return;
+    }
+       printf("\nDaftar Barang:\n");
+    while (fread(&b, sizeof(Barang), 1, fp)) {
+        printf("ID: %d | Nama: %s | Stok: %d | Harga: %.2f\n", b.id, b.nama, b.stok, b.harga);
+    }
+    fclose(fp);
+}
+
+void searchingbarang() {
+     int cariID;
+    int ketemu = 0;
+    Barang b;
+    FILE *fp = fopen("barang.dat", "rb");
+   if (fp == NULL) {
+        printf("File tidak ditemukan.\n");
+        return;
+    }
+        printf("Masukkan ID Barang yang dicari: ");
+    scanf("%d", &cariID);
+
+    while (fread(&b, sizeof(Barang), 1, fp)) {
+        if (b.id == cariID) {
+            printf("Barang ditemukan:\n");
+            printf("ID: %d | Nama: %s | Stok: %d | Harga: %.2f\n", b.id, b.nama, b.stok, b.harga);
+            ketemu = 1;
+            break;
+        }
+    }  
+          if (!ketemu) {
+        printf("Barang tidak ditemukan.\n");
+    }
+    fclose(fp);
+}
+
+void membelibarang() {
+    int beliID, jumlah;
+    int found = 0;
+    Barang b;
+    FILE *fp = fopen("barang.dat", "rb+");
+
+    if (fp == NULL) {
+        printf("File tidak ditemukan.\n");
+        return;
+    }  
+        printf("Masukkan ID Barang yang ingin dibeli: ");
+    scanf("%d", &beliID);
+    printf("Masukkan jumlah pembelian: ");
+    scanf("%d", &jumlah);  
+ while (fread(&b, sizeof(Barang), 1, fp)) {
+        if (b.id == beliID) {
+            found = 1;
+            if (b.stok >= jumlah) {
+                b.stok -= jumlah;
+                fseek(fp, sizeof(Barang), SEEK_CUR); // kembali ke posisi record
+                fwrite(&b, sizeof(Barang), 1, fp);
+                printf("Pembelian berhasil. Sisa stok: %d\n", b.stok);
+            } else {
+                printf("Stok tidak mencukupi.\n");
+            }
+            break;
+        }
+    }
+        if (!found) {
+        printf("Barang tidak ditemukan.\n");
+    }
+    fclose(fp);
+}
+
+void feedbackUser() {
+    char feedback[256];
+    FILE *fp = fopen("feedback.txt", "a");
+
+    if (fp == NULL) {
+        printf("Gagal membuka file feedback.\n");
+        return;
+    }
+        printf("Masukkan feedback Anda: ");
+    getchar(); // membersihkan buffer newline
+    fgets(feedback, sizeof(feedback), stdin);
+
+    fprintf(fp, "%s\n", feedback);
+    printf("Terima kasih atas feedback Anda!\n");
+
+    fclose(fp);
 }
 
 void menuInformasi() {
