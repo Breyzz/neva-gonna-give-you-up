@@ -5,10 +5,11 @@
 #define MAX_BELI 10
 
 struct barang {
-    int harga;
+    int harga, id;
     char nama[50];
     char kondisi[100];
     char deskripsi[100];
+    int stok;
 };
 
 struct barang daftarbarang[MAX_BARANG];
@@ -18,15 +19,18 @@ struct Pesanan {
     int id;
     char nama[100];
     char status[100];
+    char username[50];
+    char komentar[50];
 };
 
-struct Feedback {
+struct Feedback { // gabung ke User
     char username[100];
     char komentar[256];
 } feedback;
 
 struct User {
     int member;
+    char username[50];
     char pass[100];
     float saldo;
 };
@@ -36,12 +40,12 @@ typedef struct {
     char nama[50];
     int stok;
     float harga;
-} Barang;
+} Barang; // gabung ke barang
 
 typedef struct {
     Barang barang;
     int jumlah;
-} Pembelian;
+} Pembelian; // gabung ke barang
 
 
 void loginAdmin ();
@@ -76,8 +80,9 @@ void searchingbarang();
 void membelibarang(); 
 void feedbackUser();
 
-int bacaUser(struct User *user);
+int bacaUser(struct User *user, char *username);
 int simpanUser(struct User *user);
+int verifyUser();
 
 void menuInformasi();
 void topupSaldo();
@@ -144,8 +149,10 @@ void User() {
 
     switch (pilihan) {
         case 1:
-            loginPengguna();break;
+            system("cls");
+            loginPengguna(); break;
         case 2:
+            system("cls");
             registrasi(); break;
         default:
             printf("\nPilihan tidak valid.\n");
@@ -154,6 +161,7 @@ void User() {
 
 void loginPengguna() {
     char username[50], password[50], uname[50], pass[50];
+    struct User user;
     int ditemukan = 0;
     FILE *fp;
 
@@ -166,31 +174,23 @@ void loginPengguna() {
     fgets(password, sizeof(password), stdin);
     password[strcspn(password, "\n")] = 0;
 
-    fp = fopen("user.txt", "r");
-    if (fp == NULL) {
-        printf("Belum terdaftar. Silakan registrasi terlebih dahulu.\n");
-        return;
-    }
-
-    while (fscanf(fp, "%s %s", uname, pass) != EOF) {
-        if (strcmp(username, uname) == 0 && strcmp(password, pass) == 0) {
-            ditemukan = 1;
-            break;
+    if(bacaUser(&user, username)) {
+        if(strcmp(user.pass, password) == 0) {
+            printf("Login berhasil! Selamat datang, %s\n", username);
+            menuPengguna();
+        } else {
+            printf("Password salah.\n");
         }
-    }
-    fclose(fp);
-
-    if (ditemukan){
-        printf("Login berhasil! Selamat datang, %s\n", username); menuPengguna();
-    }
-    else{
-        printf("Username atau password salah.\n");
+    } else {
+        printf("Belum terdaftar. Silakan registrasi terlebih dahulu.\n");
     }
 }
 
 void registrasi() {
     char username[50], password[50];
     FILE *fp;
+    struct User user;
+    struct User temp_user;
 
     printf("\n=== REGISTRASI ===\n");
     printf("Masukkan username: ");
@@ -201,15 +201,22 @@ void registrasi() {
     fgets(password, sizeof(password), stdin);
     password[strcspn(password, "\n")] = 0;
 
-    fp = fopen("user.txt", "a");
-    if (fp == NULL) {
-        printf("Gagal membuka file.\n");
+    strcpy(user.username, username);
+    strcpy(user.pass, password);
+    user.saldo = 0.0;
+    user.member = 0;
+
+    if (bacaUser(&temp_user, username)) {
+        printf("Username sudah terdaftar. Silakan gunakan username lain.\n");
         return;
     }
-    fprintf(fp, "%s %s\n", username, password);
-    fclose(fp);
 
-    printf("Registrasi berhasil!\n");
+    if (simpanUser(&user)) {
+        printf("Registrasi berhasil!\n");
+    } else {
+        printf("Gagal melakukan registrasi.\n");
+    }
+    
     User();
 }
 
@@ -225,20 +232,25 @@ void menuAdmin() {
     printf("Pilihan : "); scanf("%d", &pilihan);
 
     switch (pilihan) {
-        case 1:
+        case 1: 
+            system("cls");
             bacaDataDariFile();
             MenuBarang();
             break;
         case 2:
+            system("cls");
             statusPesanan();
             break;
         case 3:
+            system("cls");
             feedbackAdmin();
             break;
         case 4:
+            system("cls");
             menuKeuangan();
             break;
         case 5:
+            system("cls");
             main();
             break;
         default:
@@ -256,9 +268,11 @@ void menuPengguna() {
 
     switch (pilihan) {
         case 1:
+            system("cls");
             menuPembelian();
             break;
         case 2:
+            system("cls");
             menuInformasi();
             break;
         default:
@@ -278,10 +292,18 @@ void MenuBarang() {
             continue;
         }
         switch (pilihan) {
-            case 1: tambahbarang(); break;
-            case 2: tampilkanbarang(); break;
-            case 3: hapusbarang(); break;
-            case 4: menuAdmin(); break;
+            case 1:
+                system("cls"); 
+                tambahbarang(); break;
+            case 2: 
+                system("cls");
+                tampilkanbarang(); break;
+            case 3: 
+                system("cls");
+                hapusbarang(); break;
+            case 4:
+                system("cls"); 
+                menuAdmin(); break;
             default: printf("Pilihan tidak valid.\n");
         }
     } while (pilihan != 4);
@@ -329,10 +351,10 @@ void tambahbarang() {
         printf("Gagal membuka file untuk menyimpan.\n");
         return;
     }
+    jumlahbarang++;
     fwrite(&daftarbarang[jumlahbarang], sizeof(struct barang), 1, file);
     fclose(file);
 
-    jumlahbarang++;
     printf("Barang berhasil ditambahkan dan disimpan ke file!\n");
 }
 
@@ -506,9 +528,11 @@ void menuKeuangan() {
 
     switch (pilihan) {
         case 1:
+            system("cls");
             totalPendapatan();
             break;
         case 2:
+            system("cls");
             historiTransaksi();
             break;
         default:
@@ -571,20 +595,33 @@ void menuPembelian() {
     printf("2. Searching Barang\n");
     printf("3. Membeli Barang\n");
     printf("4. Feedback User\n");
+    printf("5. Keluar\n");
     printf("Pilihan : "); scanf("%d", &pilihan);
 
     switch (pilihan) {
         case 1:
+            system("cls");
             melihatbarang();
+            menuPembelian();
             break;
         case 2:
+            system("cls");
             searchingbarang();
+            menuPembelian();
             break;
         case 3:
+            system("cls");
             membelibarang();
+            menuPembelian();
             break;
         case 4:
+            system("cls");
             feedbackUser();
+            menuPembelian();
+            break;
+        case 5:
+            system("cls");
+            menuPengguna();
             break;
         default:
             printf("\nPilihan tidak valid\n");
@@ -592,36 +629,40 @@ void menuPembelian() {
 }
 
 void melihatbarang() {
-    FILE *fp = fopen("barang.dat", "rb");
-    Barang b;
+    FILE *fp = fopen("data_barang.dat", "rb");
+    struct barang b;
 
     if (fp == NULL) {
         printf("File tidak ditemukan.\n");
         return;
     }
        printf("\nDaftar Barang:\n");
-    while (fread(&b, sizeof(Barang), 1, fp)) {
+    while (fread(&b, sizeof(struct barang), 1, fp)) {
         printf("ID: %d | Nama: %s | Stok: %d | Harga: %.2f\n", b.id, b.nama, b.stok, b.harga);
+        printf("Kondisi: %s | Deskripsi: %s\n", b.kondisi, b.deskripsi);
     }
     fclose(fp);
 }
 
 void searchingbarang() {
-     int cariID;
+    int cariID;
     int ketemu = 0;
-    Barang b;
-    FILE *fp = fopen("barang.dat", "rb");
-   if (fp == NULL) {
+    struct barang b;
+    FILE *fp = fopen("data_barang.dat", "rb");
+
+    if (fp == NULL) {
         printf("File tidak ditemukan.\n");
         return;
     }
-        printf("Masukkan ID Barang yang dicari: ");
+
+    printf("Masukkan ID Barang yang dicari: ");
     scanf("%d", &cariID);
 
-    while (fread(&b, sizeof(Barang), 1, fp)) {
+    while (fread(&b, sizeof(struct barang), 1, fp)) {
         if (b.id == cariID) {
             printf("Barang ditemukan:\n");
             printf("ID: %d | Nama: %s | Stok: %d | Harga: %.2f\n", b.id, b.nama, b.stok, b.harga);
+            printf("Kondisi: %s | Deskripsi: %s\n", b.kondisi, b.deskripsi);
             ketemu = 1;
             break;
         }
@@ -633,10 +674,13 @@ void searchingbarang() {
 }
 
 void membelibarang() {
+    melihatbarang();
     int beliID, jumlah;
+    char user[50];
     int found = 0;
     Barang b;
-    FILE *fp = fopen("barang.dat", "rb+");
+    FILE *fp1 =fopen("user.dat","rb");
+    FILE *fp = fopen("data_barang.dat", "rb+");
 
     if (fp == NULL) {
         printf("File tidak ditemukan.\n");
@@ -644,9 +688,11 @@ void membelibarang() {
     }  
         printf("Masukkan ID Barang yang ingin dibeli: ");
     scanf("%d", &beliID);
-    printf("Masukkan jumlah pembelian: ");
-    scanf("%d", &jumlah);  
- while (fread(&b, sizeof(Barang), 1, fp)) {
+    getchar();
+    printf("Masukkan username : ");
+    gets(user);
+
+    while (fread(&b, sizeof(Barang), 1, fp)) {
         if (b.id == beliID) {
             found = 1;
             if (b.stok >= jumlah) {
@@ -692,62 +738,119 @@ void menuInformasi() {
     printf("2. Lihat Saldo\n");
     printf("3. Membership\n");
     printf("4. Mengganti Password\n");
+    printf("5. Keluar\n");
     printf("Pilihan : "); scanf("%d", &pilihan);
 
     switch (pilihan) {
         case 1:
-            topupSaldo();
+            system("cls");
+            if(verifyUser()) {
+                topupSaldo();
+            }
             break;
         case 2:
-            lihatSaldo();
+            system("cls");
+            if(verifyUser()) {
+                lihatSaldo();
+            }
             break;
         case 3:
-            membership();
+            system("cls");
+            if(verifyUser()) {
+                membership();
+            }
             break;
         case 4:
-            menggantiPass();
+            system("cls");
+            if(verifyUser()) {
+                menggantiPass();
+            }
+            break;
+        case 5:
+            system("cls");
+            main();
             break;
         default:
             printf("\nPilihan tidak valid!\n");
     }
 }
 
-int bacaUser(struct User *user) {
+int bacaUser(struct User *user, char *username) {
     FILE *fuser;
+    struct User temp_user;
     fuser = fopen("user.dat", "rb");
-    int hasil;
 
     if(!fuser) {
-        user->member = 0;
-        user->saldo = 0.0;
         return 0;
     }
 
-    hasil = fread(user, sizeof(struct User), 1, fuser);
+    while(fread(&temp_user, sizeof(struct User), 1, fuser)) {
+        if(strcmp(temp_user.username, username) == 0) {
+            *user = temp_user;
+            fclose(fuser);
+            return 1;
+        }
+    }
     fclose(fuser);
-    return hasil;
+    return 0;
 }
 
 int simpanUser(struct User *user) {
-    FILE *fuser;
+    FILE *fuser, *ftemp;
+    struct User temp_user;
     fuser = fopen("user.dat", "wb");
-    int hasil;
+    ftemp = fopen("temp_user.dat", "wb");
+    int hasil = 0;
 
-    if(!fuser) {
+    if(!ftemp) {
         printf("\nGagal membuka file!\n");
         return 0;
     }
 
-    hasil = fwrite(user, sizeof(struct User), 1, fuser);
+    if(fuser) {
+        while(fread(&temp_user, sizeof(struct User), 1, fuser)) {
+            if(strcmp(temp_user.username, user->username) == 0) {
+                fwrite(user, sizeof(struct User), 1, ftemp);
+                hasil = 1;
+            } else {
+                fwrite(&temp_user, sizeof(struct User), 1, ftemp);
+            }
+        }
+    }
     fclose(fuser);
-    return hasil;
+
+    if(!hasil) {
+        fwrite(user, sizeof(struct User), 1, ftemp);
+        hasil = 1;
+    }
+    fclose(ftemp);
+    remove("user.dat");
+    rename("temp_user.dat", "user.dat");
+
+    return 1;
 }
+
+int verifyUser() {
+    struct User user;
+    char username[50];
+
+    printf("Masukkan username: "); scanf("%49s", username);
+
+    if(bacaUser(&user, username)) {
+        printf("Username ditemukan!\n");
+        strcpy(user.username, username);
+        return 1;
+        } else {
+            printf("Username tidak ditemukan!\n");
+            return 0;
+        }
+    }
 
 void topupSaldo() {
     struct User user;
     float topup;
-
-    if(!bacaUser(&user)) {
+    
+    if(!bacaUser(&user, user.username)) {
         printf("\nGagal membuka file!\n");
         return;
     }
@@ -770,7 +873,7 @@ void topupSaldo() {
 void lihatSaldo() {
     struct User user;
 
-    if(!bacaUser(&user)) {
+    if(!bacaUser(&user, user.username)) {
         printf("\nGagal membuka file!\n");
     }
 
@@ -781,7 +884,7 @@ void lihatSaldo() {
 void membership() {
     struct User user;
 
-    if (!bacaUser(&user)) {
+    if (!bacaUser(&user, user.username)) {
         printf("\nGagal membuka file!\n");
     }
 
@@ -811,7 +914,7 @@ void menggantiPass() {
     struct User user;  
     char password[100], pass[100], pass_baru[100];
 
-    if(!bacaUser(&user)) {
+    if(!bacaUser(&user, user.username)) {
         printf("\nGagal membuka file!\n");
     }
 
