@@ -351,8 +351,9 @@ void tambahbarang() {
         printf("Gagal membuka file untuk menyimpan.\n");
         return;
     }
-    jumlahbarang++;
     fwrite(&daftarbarang[jumlahbarang], sizeof(struct barang), 1, file);
+    jumlahbarang++;
+    
     fclose(file);
 
     printf("Barang berhasil ditambahkan dan disimpan ke file!\n");
@@ -868,6 +869,8 @@ void topupSaldo() {
             printf("Top-up Gagal!\n");
         }
     }
+    printf("\n");
+    menuInformasi();
 }
 
 void lihatSaldo() {
@@ -879,6 +882,8 @@ void lihatSaldo() {
 
     printf("\n=== LIHAT SALDO ===\n");
     printf("Saldo sekarang : %.2f", user.saldo);
+    printf("\n");
+    menuInformasi();
 }
 
 void membership() {
@@ -908,6 +913,8 @@ void membership() {
             printf("Saldo anda: %.2f\n", user.saldo);
         }
     }
+    printf("\n");
+    menuInformasi();
 }
 
 void menggantiPass() {
@@ -931,4 +938,6 @@ void menggantiPass() {
     } else {
         printf("Password lama salah!\n");
     }
+    printf("\n");
+    menuInformasi();
 }
